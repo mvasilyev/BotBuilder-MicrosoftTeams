@@ -58,6 +58,8 @@ export class TeamsChatConnector extends builder.ChatConnector {
 
   private queryHandlers: { [id: string]: ComposeExtensionQueryHandlerType } = {};
 
+  private usingIntentText: boolean = false;
+
   constructor(settings: builder.IChatConnectorSettings = {}) {
     super(settings)
     this.allowedTenants = null;
@@ -107,6 +109,17 @@ export class TeamsChatConnector extends builder.ChatConnector {
           callback(new Error('Failed to authorize request'), null);
         }
     });
+  }
+
+  /**
+  * This method is to resolve regex or LUIS Bot being affected by at mentions
+  * Set true would have incoming messages stripped off source Bot at mentions
+  * The default would be false
+  * Developer could swithc on/off anytime
+  * @param {boolean} flag - switch for filter Bot at mentions.
+  */
+  public setUsingIntentText(flag: boolean) {
+    this.usingIntentText = flag;
   }
 
   /**
@@ -171,16 +184,26 @@ export class TeamsChatConnector extends builder.ChatConnector {
         // Add intent message
         if (intentMessage.type == 'message') {
           var atMentions = [];
+          var botId: string = null;
+          if (re.address && re.address.bot && re.address.bot.id) {
+            botId = re.address.bot.id;
+          }
+
           intentMessage.intentText = intentMessage.text;
           for(var ent of intentMessage.entities) {
-            if (ent.type == 'mention') {
+            if (ent.type == 'mention' && ent.mentioned && botId && ent.mentioned.id == botId) {
               atMentions.push(ent.text);
             }
           }
+
           if (atMentions.length != 0) {
             for(var mention of atMentions) {
               intentMessage.intentText = intentMessage.intentText.replace(new RegExp(mention, 'g'), '');
             }
+          }
+
+          if (this.usingIntentText) {
+            intentMessage.text = intentMessage.intentText;
           }
           out.push(intentMessage);
         }

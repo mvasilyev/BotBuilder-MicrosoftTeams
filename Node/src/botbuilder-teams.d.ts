@@ -506,6 +506,15 @@ export class TeamsChatConnector extends builder.ChatConnector {
   */
   public resetAllowedTenants();
 
+  /**
+  * This method is to resolve regex or LUIS Bot being affected by at mentions
+  * Set true would have incoming messages stripped off source Bot at mentions
+  * The default would be false
+  * Developer could swithc on/off anytime
+  * @param {boolean} flag - switch for filter Bot at mentions.
+  */
+  public setUsingIntentText(flag: boolean);
+
   public onQuery(commandId: string, handler: ComposeExtensionQueryHandlerType): void;
 }
 
